@@ -38,6 +38,24 @@ clang $CFLAGS_COMMON -o fuzz_gtp_parser fuzz_gtp_parser.c
 echo "Building fuzz_dns_parser (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_dns_parser fuzz_dns_parser.c
 
+echo "Building fuzz_ipv6_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_ipv6_parser fuzz_ipv6_parser.c
+
+echo "Building fuzz_http1_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_http1_parser fuzz_http1_parser.c
+
+echo "Building fuzz_http2_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_http2_parser fuzz_http2_parser.c
+
+echo "Building fuzz_ssh_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_ssh_parser fuzz_ssh_parser.c
+
+echo "Building fuzz_dhcp_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_dhcp_parser fuzz_dhcp_parser.c
+
+echo "Building fuzz_sip_rtp_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_sip_rtp_parser fuzz_sip_rtp_parser.c
+
 echo "Building fuzz_quic_header (needs OpenSSL)..."
 clang $CFLAGS_COMMON -o fuzz_quic_header fuzz_quic_header.c -lssl -lcrypto
 
@@ -52,6 +70,12 @@ echo "  ./fuzz_tcp_reassembly fuzz_seeds/tcp_reassembly/ -max_len=4096"
 echo "  ./fuzz_radius_parser fuzz_seeds/radius/ -max_len=4096"
 echo "  ./fuzz_gtp_parser fuzz_seeds/gtp/ -max_len=1500"
 echo "  ./fuzz_dns_parser fuzz_seeds/dns/ -max_len=512"
+echo "  ./fuzz_ipv6_parser fuzz_seeds/ipv6/ -max_len=1500"
+echo "  ./fuzz_http1_parser fuzz_seeds/http1/ -max_len=4096"
+echo "  ./fuzz_http2_parser fuzz_seeds/http2/ -max_len=4096"
+echo "  ./fuzz_ssh_parser fuzz_seeds/ssh/ -max_len=2048"
+echo "  ./fuzz_dhcp_parser fuzz_seeds/dhcp/ -max_len=1024"
+echo "  ./fuzz_sip_rtp_parser fuzz_seeds/sip_rtp/ -max_len=2048"
 echo "  ./fuzz_quic_header fuzz_seeds/quic_header/ -max_len=1500"
 echo "  ./fuzz_quic_frames fuzz_seeds/quic_frames/ -max_len=4096"
 echo ""

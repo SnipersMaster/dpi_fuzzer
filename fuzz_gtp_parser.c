@@ -16,7 +16,13 @@
 #include <stddef.h>
 
 #define DPI_SKIP_REGISTER_ALL
+/* dpi_gtp_parser.c's G-PDU inner-packet dissection now calls
+ * extract_sni_from_record() from dpi_app_classifier.c — a real
+ * dependency added when GTP inner-packet recursion was implemented,
+ * not present when this harness was first written. */
+#include "dpi_app_classifier.c"
 #include "dpi_dissector_registry.c"
+#include "dpi_rfc_parser.c"
 #include "dpi_gtp_parser.c"
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
