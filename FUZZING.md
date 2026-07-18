@@ -16,8 +16,15 @@ amount of code review substitutes for it.
 | `fuzz_rfc_parser.c` | IPv4 → TCP/UDP chain (`dpi_rfc_parser.c`) | None — plaintext |
 | `fuzz_tcp_reassembly.c` | TCP flow reassembly, overlap policy (`dpi_tcp_flow_reassembly.c`) | None — plaintext, but **stateful** |
 | `fuzz_radius_parser.c` | RADIUS attribute parsing (`dpi_radius_parser.c`) | None — plaintext |
-| `fuzz_gtp_parser.c` | GTP-U v1 + GTPv2-C header parsing (`dpi_gtp_parser.c`) | None — plaintext |
-| `fuzz_dns_parser.c` | DNS header + question parsing, especially name decompression (`dpi_dns_parser.c`) | None — plaintext, but the name-decompression logic is the highest-value target here given its history as a real-world bug source |
+| `fuzz_gtp_parser.c` | GTP-U v1 + GTPv2-C header/IE parsing (`dpi_gtp_parser.c`) | None — plaintext |
+| `fuzz_dns_parser.c` | DNS header + question + answer/authority/additional parsing, especially name decompression (`dpi_dns_parser.c`) | None — plaintext, but the name-decompression logic is the highest-value target here given its history as a real-world bug source |
+| `fuzz_ipv6_parser.c` | IPv6 header + extension header chain (`dpi_ipv6_parser.c`) | None — plaintext |
+| `fuzz_http1_parser.c` | HTTP/1.1 request/status line + headers (`dpi_http1_parser.c`) | None — plaintext |
+| `fuzz_http2_parser.c` | HTTP/2 frame parsing + HPACK-decoded headers (`dpi_http2_parser.c`) | None at the frame level; calls into the HPACK decoder below |
+| `fuzz_hpack_decoder.c` | HPACK header block decoding directly (`dpi_hpack_decoder.c`) | None — plaintext, but this is the single most novel/least-precedented parsing logic in the project (257-entry Huffman table, dynamic table insertion/eviction) — **prioritize this one** |
+| `fuzz_ssh_parser.c` | SSH banner + KEXINIT namelist parsing (`dpi_ssh_parser.c`) | None — plaintext (sent before encryption begins) |
+| `fuzz_dhcp_parser.c` | DHCP TLV options (`dpi_dhcp_parser.c`) | None — plaintext |
+| `fuzz_sip_rtp_parser.c` | SIP text parsing + RTP fixed header (`dpi_sip_rtp_parser.c`) | None — plaintext |
 | `fuzz_quic_header.c` | QUIC pre-decryption parsing (`dpi_quic_parser.c`) | Yes — see below |
 | `fuzz_quic_frames.c` | QUIC post-decryption frame walking + SNI (`dpi_quic_parser.c`) | Yes — see below |
 

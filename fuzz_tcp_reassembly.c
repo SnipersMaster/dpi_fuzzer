@@ -56,10 +56,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     size_t pos = 2;
     uint32_t running_seq = 1000;   /* arbitrary nonzero base */
 
-    struct tcp_flow_key key = {
-        .src_ip = 0x0A000001, .dst_ip = 0x0A000002,
-        .src_port = 51234, .dst_port = 443
-    };
+    struct tcp_flow_key key = tcp_flow_key_make_v4(0x0A000001, 0x0A000002, 51234, 443);
 
     for (uint8_t i = 0; i < n_segments; i++) {
         if (pos + 5 > Size) break;   /* not enough input left for another segment header */
