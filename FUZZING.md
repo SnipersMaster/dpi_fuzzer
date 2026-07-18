@@ -16,11 +16,27 @@ amount of code review substitutes for it.
 | `fuzz_rfc_parser.c` | IPv4 → TCP/UDP chain (`dpi_rfc_parser.c`) | None — plaintext |
 | `fuzz_tcp_reassembly.c` | TCP flow reassembly, overlap policy (`dpi_tcp_flow_reassembly.c`) | None — plaintext, but **stateful** |
 | `fuzz_radius_parser.c` | RADIUS attribute parsing (`dpi_radius_parser.c`) | None — plaintext |
+| `fuzz_gtp_parser.c` | GTP-U v1 + GTPv2-C header parsing (`dpi_gtp_parser.c`) | None — plaintext |
+| `fuzz_dns_parser.c` | DNS header + question parsing, especially name decompression (`dpi_dns_parser.c`) | None — plaintext, but the name-decompression logic is the highest-value target here given its history as a real-world bug source |
 | `fuzz_quic_header.c` | QUIC pre-decryption parsing (`dpi_quic_parser.c`) | Yes — see below |
 | `fuzz_quic_frames.c` | QUIC post-decryption frame walking + SNI (`dpi_quic_parser.c`) | Yes — see below |
 
-Three of these are ordinary raw-byte fuzzing targets: IPv4/TCP/UDP and
-RADIUS are plaintext on the wire, so there's nothing to work around.
+**Note on single-dissector isolation**: `dpi_dissector_registry.c`'s
+`register_all_dissectors()` references every protocol module's
+registration function, which would otherwise force even a RADIUS-only
+harness to link against QUIC/OpenSSL, GTP, and DNS just to satisfy
+unused extern references. Each of these harnesses defines
+`DPI_SKIP_REGISTER_ALL` before including the registry to avoid that —
+see the guard's comment in `dpi_dissector_registry.c` for the full
+explanation. This was a real coupling bug caught while adding the GTP
+and DNS harnesses, not a design that was planned this way from the
+start.
+
+Four of these are ordinary raw-byte fuzzing targets: IPv4/TCP/UDP,
+RADIUS, GTP-U/GTPv2-C, and DNS are all plaintext on the wire, so
+there's nothing to work around. TCP flow reassembly is also plaintext,
+but stateful — see its own section below for why that changes the
+harness design.
 
 **QUIC needed two harnesses because of its crypto boundary, and this
 matters enough to explain properly, not just assert.** QUIC's Initial

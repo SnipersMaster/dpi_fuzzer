@@ -16,6 +16,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/* Skip register_all_dissectors() — this harness only needs RADIUS,
+ * not the full multi-protocol dependency graph (which would otherwise
+ * pull in QUIC/OpenSSL, GTP, and DNS just to satisfy an unused
+ * function's extern references). See the guard's explanation in
+ * dpi_dissector_registry.c. */
+#define DPI_SKIP_REGISTER_ALL
 #include "dpi_dissector_registry.c"
 #include "dpi_radius_parser.c"
 

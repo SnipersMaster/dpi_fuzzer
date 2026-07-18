@@ -33,8 +33,8 @@
 #include <stddef.h>
 
 #include "dpi_app_classifier.c"
+#define DPI_SKIP_REGISTER_ALL
 #include "dpi_dissector_registry.c"
-#include "dpi_radius_parser.c"
 #include "dpi_quic_parser.c"
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {

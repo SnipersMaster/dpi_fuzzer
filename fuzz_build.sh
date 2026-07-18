@@ -32,6 +32,12 @@ clang $CFLAGS_COMMON -o fuzz_tcp_reassembly fuzz_tcp_reassembly.c
 echo "Building fuzz_radius_parser (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_radius_parser fuzz_radius_parser.c
 
+echo "Building fuzz_gtp_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_gtp_parser fuzz_gtp_parser.c
+
+echo "Building fuzz_dns_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_dns_parser fuzz_dns_parser.c
+
 echo "Building fuzz_quic_header (needs OpenSSL)..."
 clang $CFLAGS_COMMON -o fuzz_quic_header fuzz_quic_header.c -lssl -lcrypto
 
@@ -44,6 +50,8 @@ echo "Build complete. Run each against its seed corpus, e.g.:"
 echo "  ./fuzz_rfc_parser fuzz_seeds/rfc_parser/ -max_len=2048"
 echo "  ./fuzz_tcp_reassembly fuzz_seeds/tcp_reassembly/ -max_len=4096"
 echo "  ./fuzz_radius_parser fuzz_seeds/radius/ -max_len=4096"
+echo "  ./fuzz_gtp_parser fuzz_seeds/gtp/ -max_len=1500"
+echo "  ./fuzz_dns_parser fuzz_seeds/dns/ -max_len=512"
 echo "  ./fuzz_quic_header fuzz_seeds/quic_header/ -max_len=1500"
 echo "  ./fuzz_quic_frames fuzz_seeds/quic_frames/ -max_len=4096"
 echo ""

@@ -33,16 +33,13 @@
 
 /* dpi_quic_parser.c needs struct dissect_result / dissect_result_add()
  * from the registry, and extract_sni_from_clienthello_body() from the
- * app classifier. dpi_radius_parser.c is ALSO needed here even though
- * this harness never calls anything RADIUS-related: the registry's
- * register_all_dissectors() (unused, but compiled into this TU)
- * references register_radius_dissector() as an extern, which must
- * resolve at LINK time regardless of whether the referencing function
- * is ever called at runtime — same include set the capture files use,
- * for exactly this reason. */
+ * app classifier. DPI_SKIP_REGISTER_ALL means this harness does NOT
+ * need dpi_radius_parser.c, dpi_gtp_parser.c, or dpi_dns_parser.c at
+ * all — it's genuinely QUIC-only now. See the guard's explanation in
+ * dpi_dissector_registry.c. */
 #include "dpi_app_classifier.c"
+#define DPI_SKIP_REGISTER_ALL
 #include "dpi_dissector_registry.c"
-#include "dpi_radius_parser.c"
 #include "dpi_quic_parser.c"
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
