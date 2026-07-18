@@ -44,6 +44,9 @@ clang $CFLAGS_COMMON -o fuzz_ipv6_parser fuzz_ipv6_parser.c
 echo "Building fuzz_hpack_decoder (no crypto deps - highest priority of the new harnesses)..."
 clang $CFLAGS_COMMON -o fuzz_hpack_decoder fuzz_hpack_decoder.c
 
+echo "Building fuzz_icmp_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_icmp_parser fuzz_icmp_parser.c
+
 echo "Building fuzz_http1_parser (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_http1_parser fuzz_http1_parser.c
 
@@ -75,6 +78,7 @@ echo "  ./fuzz_gtp_parser fuzz_seeds/gtp/ -max_len=1500"
 echo "  ./fuzz_dns_parser fuzz_seeds/dns/ -max_len=512"
 echo "  ./fuzz_ipv6_parser fuzz_seeds/ipv6/ -max_len=1500"
 echo "  ./fuzz_hpack_decoder fuzz_seeds/hpack/ -max_len=4096"
+echo "  ./fuzz_icmp_parser fuzz_seeds/icmp/ -max_len=1500"
 echo "  ./fuzz_http1_parser fuzz_seeds/http1/ -max_len=4096"
 echo "  ./fuzz_http2_parser fuzz_seeds/http2/ -max_len=4096"
 echo "  ./fuzz_ssh_parser fuzz_seeds/ssh/ -max_len=2048"

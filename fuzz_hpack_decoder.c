@@ -34,7 +34,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     if (Size < 1 || Size > 4096) return 0;
 
     bool dyn_miss = false;
-    hpack_decode_header_block(Data, Size, 4096, noop_header_callback, NULL, &dyn_miss);
+    hpack_decode_header_block_fresh(Data, Size, 4096, noop_header_callback, NULL, &dyn_miss);
 
     return 0;
 }

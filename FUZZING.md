@@ -19,14 +19,17 @@ amount of code review substitutes for it.
 | `fuzz_gtp_parser.c` | GTP-U v1 + GTPv2-C header/IE parsing (`dpi_gtp_parser.c`) | None — plaintext |
 | `fuzz_dns_parser.c` | DNS header + question + answer/authority/additional parsing, especially name decompression (`dpi_dns_parser.c`) | None — plaintext, but the name-decompression logic is the highest-value target here given its history as a real-world bug source |
 | `fuzz_ipv6_parser.c` | IPv6 header + extension header chain (`dpi_ipv6_parser.c`) | None — plaintext |
+| `fuzz_icmp_parser.c` | ICMPv4 + ICMPv6 parsing (`dpi_icmp_parser.c`), including Neighbor Discovery target-address extraction | None — plaintext (ICMPv6 checksum verification lives in the capture path, not exercised by this harness — see the file's header comment) |
 | `fuzz_http1_parser.c` | HTTP/1.1 request/status line + headers (`dpi_http1_parser.c`) | None — plaintext |
-| `fuzz_http2_parser.c` | HTTP/2 frame parsing + HPACK-decoded headers (`dpi_http2_parser.c`) | None at the frame level; calls into the HPACK decoder below |
+| `fuzz_http2_parser.c` | HTTP/2 frame parsing + HPACK-decoded headers, including CONTINUATION reassembly (`dpi_http2_parser.c`) | None at the frame level; calls into the HPACK decoder below |
 | `fuzz_hpack_decoder.c` | HPACK header block decoding directly (`dpi_hpack_decoder.c`) | None — plaintext, but this is the single most novel/least-precedented parsing logic in the project (257-entry Huffman table, dynamic table insertion/eviction) — **prioritize this one** |
 | `fuzz_ssh_parser.c` | SSH banner + KEXINIT namelist parsing (`dpi_ssh_parser.c`) | None — plaintext (sent before encryption begins) |
 | `fuzz_dhcp_parser.c` | DHCP TLV options (`dpi_dhcp_parser.c`) | None — plaintext |
 | `fuzz_sip_rtp_parser.c` | SIP text parsing + RTP fixed header (`dpi_sip_rtp_parser.c`) | None — plaintext |
 | `fuzz_quic_header.c` | QUIC pre-decryption parsing (`dpi_quic_parser.c`) | Yes — see below |
 | `fuzz_quic_frames.c` | QUIC post-decryption frame walking + SNI (`dpi_quic_parser.c`) | Yes — see below |
+
+**Note**: `dpi_hpack_connection_state.c` (per-flow persistent HPACK dynamic table) has no dedicated fuzz harness yet — it's an integration/state-management layer over the already-fuzzed `dpi_hpack_decoder.c`, not new parsing logic itself. Worth a harness if you extend it further (e.g. if you add real SETTINGS_HEADER_TABLE_SIZE tracking).
 
 **Note on single-dissector isolation**: `dpi_dissector_registry.c`'s
 `register_all_dissectors()` references every protocol module's
@@ -160,3 +163,40 @@ matches RFC 9001's test vectors — see the README's separate item on
 that) or that the DGA/VPN scoring heuristics are well-calibrated. Those
 need their own validation, already tracked separately in the README's
 next-steps list.
+
+## Outstanding TODOs specific to fuzzing
+
+1. **Actually run all 15 harnesses.** Still zero executed anywhere —
+   no clang/libFuzzer toolchain has been available in any sandbox this
+   project has been built in. This remains the single most important
+   gap between "carefully reviewed" and "actually validated."
+2. **`fuzz_hpack_decoder.c` first, specifically.** It's the most novel,
+   least-precedented logic in the project (a 257-entry Huffman table,
+   integer/string decoding over attacker-controlled lengths, dynamic
+   table insertion/eviction) — verified by hand against three real RFC
+   7541 Appendix C test vectors, but hand-verification of a few cases
+   is never a substitute for fuzzing across the full input space.
+3. **`fuzz_icmp_parser.c` and `fuzz_ipv6_parser.c` next** — both added
+   recently, both parse structures with real historical bug patterns
+   elsewhere (ICMP original-packet embedding, IPv6 extension chains).
+4. **Build a fuzz harness for the HTTP/2 CONTINUATION reassembly path
+   specifically** — `fuzz_http2_parser.c` exercises it structurally,
+   but a harness that deliberately constructs multi-frame HEADERS +
+   CONTINUATION sequences (valid stream IDs, split at varying points,
+   adversarial cases like a CONTINUATION frame with a mismatched stream
+   ID) would give much more targeted coverage of that specific new
+   logic than generic frame-sequence fuzzing does.
+5. **Consider a harness for `dpi_hpack_connection_state.c`** if you
+   extend it beyond the current fixed 4096-byte default table size
+   (e.g. if real SETTINGS_HEADER_TABLE_SIZE tracking is added) — right
+   now it's a thin, low-risk state-management layer over the
+   already-fuzzed decoder, not new parsing logic, so it wasn't given
+   its own harness.
+6. **Get RFC 9001 Appendix A.2's exact test vector into a seed/test
+   file once you have real RFC access** — this project made two
+   documented attempts to fetch it (search results only surfaced
+   fragments from pre-final IETF drafts with mismatched version
+   identifiers; direct RFC fetches truncated before the appendix's hex
+   content) and could not complete this from within the sandbox. Once
+   you have the real bytes, they'd make an excellent, extremely
+   high-confidence seed for `fuzz_quic_header.c`.
