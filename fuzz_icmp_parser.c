@@ -20,6 +20,13 @@
 
 #define DPI_SKIP_REGISTER_ALL
 #include "dpi_dissector_registry.c"
+/* dpi_icmp_parser.c's Destination Unreachable/Time Exceeded handling
+ * now calls parse_ipv4() and parse_ipv6()/parse_tcp_v6()/parse_udp_v6()
+ * to dissect the embedded original packet — real dependencies added
+ * when that recursion was implemented, not present when this harness
+ * was first written. */
+#include "dpi_rfc_parser.c"
+#include "dpi_ipv6_parser.c"
 #include "dpi_icmp_parser.c"
 
 int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
