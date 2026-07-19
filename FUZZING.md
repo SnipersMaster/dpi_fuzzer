@@ -28,6 +28,11 @@ amount of code review substitutes for it.
 | `fuzz_ssh_parser.c` | SSH banner + KEXINIT namelist parsing (`dpi_ssh_parser.c`) | None — plaintext (sent before encryption begins) |
 | `fuzz_dhcp_parser.c` | DHCP TLV options (`dpi_dhcp_parser.c`) | None — plaintext |
 | `fuzz_sip_rtp_parser.c` | SIP text parsing + RTP fixed header (`dpi_sip_rtp_parser.c`) | None — plaintext |
+| `fuzz_arp_parser.c` | ARP opcode/address parsing (`dpi_arp_parser.c`) | None — plaintext |
+| `fuzz_mqtt_parser.c` | MQTT CONNECT/PUBLISH/SUBSCRIBE parsing (`dpi_mqtt_parser.c`) | None — plaintext |
+| `fuzz_ntp_parser.c` | NTP fixed 48-byte header (`dpi_ntp_parser.c`) | None — plaintext |
+| `fuzz_snmp_parser.c` | SNMP BER/ASN.1 decoding (`dpi_snmp_parser.c`) — a new parsing paradigm in this project, worth extra attention | None — plaintext |
+| `fuzz_stun_parser.c` | STUN message/attribute parsing (`dpi_stun_parser.c`) | None — plaintext |
 | `fuzz_quic_header.c` | QUIC pre-decryption parsing (`dpi_quic_parser.c`) | Yes — see below |
 | `fuzz_quic_frames.c` | QUIC post-decryption frame walking + SNI (`dpi_quic_parser.c`) | Yes — see below |
 
@@ -172,43 +177,76 @@ next-steps list.
 `fuzz_http2_continuation.c` (a dedicated, structure-aware harness for
 CONTINUATION reassembly specifically — see its own header comment for
 why generic frame fuzzing wasn't giving that logic deep coverage) were
-added — 17 harnesses total now. **RFC 9001 Appendix A.2's exact test
-vector was found and used** (via a third-party Ruby implementation
-that itself asserts against the RFC's published values) — the full
-key-derivation-through-decryption path in `dpi_quic_parser.c` is now
-validated byte-exact against it, not just cross-checked against
-pseudocode. It's in the seed corpus as
-`fuzz_seeds/quic_header/rfc9001_appendix_a2_client_initial_REAL.bin`.
+added, plus `fuzz_arp_parser.c`, `fuzz_mqtt_parser.c`,
+`fuzz_ntp_parser.c`, `fuzz_snmp_parser.c`, and `fuzz_stun_parser.c`
+(closing a gap where those five dissectors existed and were registered
+but had no harness at all) — **22 harnesses total now**.
 
-1. **Actually run all 17 harnesses.** Still zero executed anywhere —
+**On the RFC 9001 Appendix A.2 test vector — stated precisely, since an
+earlier draft of this note overstated it**: the seed file
+`fuzz_seeds/quic_header/rfc9001_appendix_a2_client_initial_REAL.bin`
+was independently re-verified this session: the DCID and salt were
+used to derive Initial keys from scratch (HKDF via Python's `hashlib`/
+`hmac`, not copied from any external source), header protection was
+removed and the payload AEAD-decrypted using Python's `cryptography`
+library (AES-ECB, AES-GCM) — a real, independent implementation, not a
+re-run of `dpi_quic_parser.c` itself. Decryption **succeeded**
+(GCM authentication passing on real ciphertext is not something that
+happens by chance) and produced a CRYPTO frame containing a TLS
+ClientHello with the literal string "example.com" — matching RFC
+9001's published worked example exactly. **What this proves**: the
+test vector is genuine RFC data, and the key-derivation/decryption
+*algorithm* dpi_quic_parser.c implements (already cross-checked against
+the RFC's pseudocode line-by-line) is correct when applied to real
+bytes. **What this does NOT prove**: that `dpi_quic_parser.c`'s actual
+C code — as written, not as re-implemented in Python just now — is
+bug-free. That still requires compiling and running the C module
+itself against this exact seed, which hasn't happened (no compiler in
+any sandbox this project has been built in). This closes the gap
+between "algorithm reviewed against pseudocode" and "algorithm
+verified against real bytes" — the remaining gap is "the C code
+compiles and runs correctly," which is true of every file in this
+project, not something specific to QUIC anymore.
+
+1. **Actually run all 22 harnesses.** Still zero executed anywhere —
    no clang/libFuzzer toolchain has been available in any sandbox this
    project has been built in. This remains the single most important
-   gap between "carefully reviewed" and "actually validated," and nothing
-   in this pass changes that — it's restated deliberately, not out of
-   habit.
+   gap between "carefully reviewed" and "actually validated," and
+   nothing in this pass changes that — it's restated deliberately, not
+   out of habit.
 2. **`fuzz_hpack_decoder.c` first, specifically.** It's the most novel,
    least-precedented logic in the project (a 257-entry Huffman table,
    integer/string decoding over attacker-controlled lengths, dynamic
    table insertion/eviction) — verified by hand against three real RFC
    7541 Appendix C test vectors, but hand-verification of a few cases
    is never a substitute for fuzzing across the full input space.
-3. **`fuzz_quic_header.c`, specifically with the new real RFC 9001
-   seed**, is now a close second priority — that seed is about as
-   high-confidence a starting corpus as this project can produce for
-   any target, and mutating from a byte-exact-verified real packet is
-   likely to find genuine edge cases faster than mutating from a
-   synthetic one.
+3. **`fuzz_quic_header.c`, specifically with the real RFC 9001 seed**,
+   is now a close second priority — mutating from a byte-exact,
+   independently-decryption-verified real packet is likely to find
+   genuine edge cases faster than mutating from a synthetic one. Once
+   you have a compiler, running this seed through the actual
+   `dpi_quic_parser.c` code (not just the Python reimplementation done
+   this session) and confirming it decrypts correctly is the specific
+   next validation step — see the note above on what's proven vs. not.
 4. **`fuzz_icmp_parser.c` and `fuzz_ipv6_parser.c` next** — both parse
    structures with real historical bug patterns elsewhere (ICMP
    original-packet embedding — now with actual recursive dissection to
    fuzz, not just a flag — and IPv6 extension chains).
-5. **Consider a harness for `dpi_hpack_connection_state.c`** if you
+5. **The 5 newest harnesses (`fuzz_arp_parser.c`, `fuzz_mqtt_parser.c`,
+   `fuzz_ntp_parser.c`, `fuzz_snmp_parser.c`, `fuzz_stun_parser.c`)
+   have seeds that were generated quickly and NOT individually
+   verified byte-for-byte against each dissector's exact parsing logic
+   the way DNS/GTP/SSH/QUIC seeds were — treat them as starting points
+   to mutate from, not confirmed-correct fixtures. `fuzz_snmp_parser.c`
+   is worth particular attention given BER/ASN.1 is a new parsing
+   paradigm in this project with no precedent to lean on.
+6. **Consider a harness for `dpi_hpack_connection_state.c`** if you
    extend it beyond the current fixed 4096-byte default table size
    (e.g. if real SETTINGS_HEADER_TABLE_SIZE tracking is added) — right
    now it's a thin, low-risk state-management layer over the
    already-fuzzed decoder, not new parsing logic, so it wasn't given
    its own harness.
-6. **Consider a harness for the ICMP/ICMPv6 embedded-original-packet
+7. **Consider a harness for the ICMP/ICMPv6 embedded-original-packet
    recursion** specifically (similar in spirit to why
    `fuzz_http2_continuation.c` was built dedicated rather than relying
    on `fuzz_icmp_parser.c`'s generic coverage) — the recursion depth is
