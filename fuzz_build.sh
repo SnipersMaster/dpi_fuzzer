@@ -188,6 +188,9 @@ clang $CFLAGS_COMMON -o fuzz_pim_parser fuzz_pim_parser.c
 echo "Building fuzz_appletalk_parser (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_appletalk_parser fuzz_appletalk_parser.c
 
+echo "Building fuzz_pppoe_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_pppoe_parser fuzz_pppoe_parser.c
+
 echo "Building fuzz_ipv4_fragmentation (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_ipv4_fragmentation fuzz_ipv4_fragmentation.c
 
@@ -282,6 +285,7 @@ echo "  ./fuzz_stp_parser fuzz_seeds/stp/ -max_len=128"
 echo "  ./fuzz_m2ua_parser fuzz_seeds/m2ua/ -max_len=256"
 echo "  ./fuzz_pim_parser fuzz_seeds/pim/ -max_len=256"
 echo "  ./fuzz_appletalk_parser fuzz_seeds/appletalk/ -max_len=128"
+echo "  ./fuzz_pppoe_parser fuzz_seeds/pppoe/ -max_len=256"
 echo "  ./fuzz_ipv4_fragmentation fuzz_seeds/ipv4_fragmentation/ -max_len=1500"
 echo "  ./fuzz_http2_continuation_reassembly fuzz_seeds/http2_continuation_reassembly/ -max_len=4096"
 echo "  ./fuzz_80211_parser fuzz_seeds/80211/ -max_len=2312"
