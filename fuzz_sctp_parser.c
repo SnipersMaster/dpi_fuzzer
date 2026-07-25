@@ -9,14 +9,16 @@
  *
  * `sctp_dissect()` calls `dispatch_dissection()` internally for a
  * DATA chunk's PPID-keyed inner-protocol recursion (the same pattern
- * GRE/MPLS/L2TPv3/802.11's Data-frame recursion already use), so
- * M3UA is explicitly registered below — `fuzz_80211_parser.c` had
- * this exact situation (an internal `dispatch_dissection()` call
+ * GRE/MPLS/L2TPv3/802.11's Data-frame recursion already use), so both
+ * M3UA and M2UA are explicitly registered below — `fuzz_80211_parser.c`
+ * had this exact situation (an internal `dispatch_dissection()` call
  * silently finding nothing because nothing was registered) turn into
  * a real, previously-undetected gap once its own inner dissectors
- * existed but were never wired into that harness. M2UA isn't
- * registered yet since `dpi_m2ua_parser.c` doesn't exist yet —
- * whoever adds it should register it here too, same reminder.
+ * existed but were never wired into that harness. This harness's own
+ * comment once said "M2UA isn't registered yet ... whoever adds it
+ * should register it here too" — followed through on that directly
+ * once `dpi_m2ua_parser.c` was actually written, rather than letting
+ * it become a second stale reminder.
  *
  * Build: clang -g -O1 -fsanitize=fuzzer,address,undefined \
  *            -o fuzz_sctp_parser fuzz_sctp_parser.c
@@ -32,6 +34,7 @@
 #include "dpi_dissector_registry.c"
 #include "dpi_sctp_parser.c"
 #include "dpi_m3ua_parser.c"
+#include "dpi_m2ua_parser.c"
 
 static int g_registered = 0;
 
@@ -40,6 +43,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
     if (!g_registered) {
         register_m3ua_dissector();
+        register_m2ua_dissector();
         g_registered = 1;
     }
 
