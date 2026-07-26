@@ -211,6 +211,9 @@ clang $CFLAGS_COMMON -o fuzz_postgresql_parser fuzz_postgresql_parser.c
 echo "Building fuzz_tds_parser (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_tds_parser fuzz_tds_parser.c
 
+echo "Building fuzz_serialnumberd_parser (no crypto deps)..."
+clang $CFLAGS_COMMON -o fuzz_serialnumberd_parser fuzz_serialnumberd_parser.c
+
 
 echo "Building fuzz_ipv4_fragmentation (no crypto deps)..."
 clang $CFLAGS_COMMON -o fuzz_ipv4_fragmentation fuzz_ipv4_fragmentation.c
@@ -314,6 +317,7 @@ echo "  ./fuzz_rtsp_parser fuzz_seeds/rtsp/ -max_len=1024"
 echo "  ./fuzz_mysql_parser fuzz_seeds/mysql/ -max_len=256"
 echo "  ./fuzz_postgresql_parser fuzz_seeds/postgresql/ -max_len=256"
 echo "  ./fuzz_tds_parser fuzz_seeds/tds/ -max_len=256"
+echo "  ./fuzz_serialnumberd_parser fuzz_seeds/serialnumberd/ -max_len=128"
 echo "  ./fuzz_ipv4_fragmentation fuzz_seeds/ipv4_fragmentation/ -max_len=1500"
 echo "  ./fuzz_http2_continuation_reassembly fuzz_seeds/http2_continuation_reassembly/ -max_len=4096"
 echo "  ./fuzz_80211_parser fuzz_seeds/80211/ -max_len=2312"
